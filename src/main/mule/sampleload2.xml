@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="426f000a-23d3-432e-93b9-065a572af428" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="ebf086ad-0903-4fc5-ac60-6582a38947f6" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="root" database="school" />
+	</db:config>
+	<db:config name="Database_Config1" doc:name="Database Config" doc:id="7d5151d7-fb77-4ff0-bdc8-774ef88713c0" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="root" database="school" />
+	</db:config>
+	<db:config name="Database_Config2" doc:name="Database Config" doc:id="7941ad6f-8f2a-451f-a048-f8bd750c4b5f" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="root" database="school" />
+	</db:config>
+	<flow name="sampleload2Flow" doc:id="f5963236-cb48-4e2d-b24a-f2ae994e1b7b" >
+		<http:listener doc:name="Listener" doc:id="9f1e6b45-2020-4bae-92b6-f7a39b24b3b1" config-ref="HTTP_Listener_config" path="load"/>
+		<set-variable value="#[attributes.queryParams.stu_dept]" doc:name="Set Variable" doc:id="d3b2d845-b749-4779-b3e7-fb676b33add7" variableName="name"/>
+		<db:select doc:name="Select" doc:id="b71bbf36-363f-422c-9096-d7bf089007a2" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM school1.student where stu_dept= :stu_dept]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'stu_dept':vars.name
+}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Choice" doc:id="648403e5-7bb3-4a38-b36f-d002bc4ece0a" >
+			<when expression="#[payload !=[]]">
+				<ee:transform doc:name="Transform Message" doc:id="d95fab76-f6e4-4f4d-8ee8-40222be902dc" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<when expression="#[payload==[]]">
+				<db:select doc:name="Select" doc:id="b6a67203-835d-44ba-a7a1-773fd87fe5b4" config-ref="Database_Config2">
+					<db:sql ><![CDATA[SELECT * FROM school1.student]]></db:sql>
+				</db:select>
+				<ee:transform doc:name="Transform Message" doc:id="b5f3c04b-7e74-4398-93a9-5b19aa8e6505" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="61b8b345-647f-40de-9108-5ad5e6667fee" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>
